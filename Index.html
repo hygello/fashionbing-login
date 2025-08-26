@@ -2,129 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fashionbing Login</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
       background: white;
       color: black;
+      font-family: Arial, sans-serif;
       display: flex;
+      height: 100vh;
       justify-content: center;
       align-items: center;
-      height: 100vh;
     }
     .container {
-      width: 100%;
-      max-width: 400px;
-      padding: 2rem;
-      border: 2px solid black;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    h1 {
+      width: 320px;
+      padding: 20px;
+      border: 1px solid black;
+      border-radius: 8px;
       text-align: center;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
-    }
-    label {
-      font-size: 14px;
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
     }
     input {
-      width: 100%;
+      width: 90%;
       padding: 10px;
+      margin: 8px 0;
       border: 1px solid black;
-      border-radius: 6px;
-      margin-bottom: 1rem;
-      font-size: 14px;
+      border-radius: 4px;
     }
     button {
-      width: 100%;
-      padding: 12px;
+      width: 95%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .login-btn {
       background: black;
       color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      opacity: 0.8;
-    }
-    .toggle {
-      text-align: center;
-      margin-top: 1rem;
-      font-size: 14px;
-    }
-    .toggle button {
-      background: none;
-      color: black;
-      border: none;
-      text-decoration: underline;
-      cursor: pointer;
-      font-size: 14px;
     }
     .google-btn {
-      margin-top: 1rem;
       background: white;
       color: black;
       border: 1px solid black;
     }
-    .hidden {
-      display: none;
-    }
-    .error {
-      color: red;
-      font-size: 13px;
-      margin-bottom: 10px;
-      text-align: center;
+    .toggle-link {
+      margin-top: 10px;
+      cursor: pointer;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1 id="form-title">Fashionbing Login</h1>
-    <p id="error-message" class="error"></p>
-    <form id="auth-form">
-      <div id="name-field" class="hidden">
-        <label for="name">Full Name</label>
-        <input type="text" id="name" placeholder="Enter your name">
-      </div>
-
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="Enter your email" required>
-
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="Enter your password" required>
-
-      <button type="submit" id="submit-btn">Login</button>
-    </form>
-
-    <button id="google-btn" class="google-btn">Continue with Google</button>
-
-    <div class="toggle">
-      <span id="toggle-text">Don’t have an account?</span>
-      <button id="toggle-btn">Sign Up</button>
-    </div>
+    <h2 id="formTitle">Login</h2>
+    
+    <!-- 🔹 Email input -->
+    <input type="email" id="email" placeholder="Email" required><br>
+    
+    <!-- 🔹 Password input -->
+    <input type="password" id="password" placeholder="Password" required><br>
+    
+    <!-- 🔹 Main login/signup button -->
+    <button class="login-btn" id="submitBtn">Login</button>
+    
+    <!-- 🔹 Google login button -->
+    <button class="google-btn" id="googleLogin">Sign in with Google</button>
+    
+    <!-- 🔹 Switch between login and sign-up -->
+    <div class="toggle-link" id="toggle">Don't have an account? Sign up</div>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
-    // Import Firebase modules from CDN
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { 
-      getAuth, 
-      createUserWithEmailAndPassword, 
-      signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      signInWithPopup
-    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  <!-- 🔹 Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
 
-    // ✅ Your Firebase configuration
+  <script>
+    // 🔹 Your Firebase config (already customized for Fashionbing)
     const firebaseConfig = {
       apiKey: "AIzaSyAt6f0_yDSY_w7mBL55PWJkY4u__okpDUM",
       authDomain: "fashionbing-8cbeb.firebaseapp.com",
@@ -134,72 +86,56 @@
       appId: "1:204679263506:web:91e9f0ee2cf3407e442fcb"
     };
 
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
+    // 🔹 Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-    // DOM Elements
-    const formTitle = document.getElementById("form-title");
-    const nameField = document.getElementById("name-field");
-    const submitBtn = document.getElementById("submit-btn");
-    const toggleText = document.getElementById("toggle-text");
-    const toggleBtn = document.getElementById("toggle-btn");
-    const form = document.getElementById("auth-form");
-    const errorMessage = document.getElementById("error-message");
-    const googleBtn = document.getElementById("google-btn");
-
+    // 🔹 Toggle between Login and Sign-up
     let isLogin = true;
+    const formTitle = document.getElementById("formTitle");
+    const submitBtn = document.getElementById("submitBtn");
+    const toggle = document.getElementById("toggle");
 
-    // Toggle between Login & Sign Up
-    toggleBtn.addEventListener("click", () => {
+    toggle.addEventListener("click", () => {
       isLogin = !isLogin;
-      if (isLogin) {
-        formTitle.textContent = "Fashionbing Login";
-        nameField.classList.add("hidden");
-        submitBtn.textContent = "Login";
-        toggleText.textContent = "Don’t have an account?";
-        toggleBtn.textContent = "Sign Up";
-      } else {
-        formTitle.textContent = "Fashionbing Sign Up";
-        nameField.classList.remove("hidden");
-        submitBtn.textContent = "Sign Up";
-        toggleText.textContent = "Already have an account?";
-        toggleBtn.textContent = "Login";
-      }
+      formTitle.innerText = isLogin ? "Login" : "Sign Up";
+      submitBtn.innerText = isLogin ? "Login" : "Sign Up";
+      toggle.innerText = isLogin
+        ? "Don't have an account? Sign up"
+        : "Already have an account? Login";
     });
 
-    // Handle Email/Password form submit
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      errorMessage.textContent = ""; // Clear old error
-
+    // 🔹 Handle Email/Password Login & Signup
+    submitBtn.addEventListener("click", () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
 
-      try {
-        if (isLogin) {
-          await signInWithEmailAndPassword(auth, email, password);
-        } else {
-          await createUserWithEmailAndPassword(auth, email, password);
-        }
-
-        // Redirect on success
-        window.location.href = "https://fashionbing.callbell.shop";
-      } catch (err) {
-        errorMessage.textContent = err.message;
+      if (isLogin) {
+        // Login flow
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => {
+            window.location.href = "https://fashionbing.callbell.shop";
+          })
+          .catch((error) => alert(error.message));
+      } else {
+        // Signup flow
+        auth.createUserWithEmailAndPassword(email, password)
+          .then(() => {
+            window.location.href = "https://fashionbing.callbell.shop";
+          })
+          .catch((error) => alert(error.message));
       }
     });
 
-    // Handle Google Sign-In
-    googleBtn.addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-        window.location.href = "https://fashionbing.callbell.shop";
-      } catch (err) {
-        errorMessage.textContent = err.message;
-      }
+    // 🔹 Google Sign-In
+    document.getElementById("googleLogin").addEventListener("click", () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then(() => {
+          window.location.href = "https://fashionbing.callbell.shop";
+        })
+        .catch((error) => alert(error.message));
     });
   </script>
 </body>
-</html>
+  </html>
