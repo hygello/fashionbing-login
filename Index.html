@@ -1,15 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fashionbing Login</title>
+  <title>Fashionbing Auth</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #fff;
-      color: #000;
+      background: white;
+      color: black;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -19,10 +18,9 @@
       width: 100%;
       max-width: 400px;
       padding: 2rem;
-      border: 2px solid #000;
+      border: 2px solid black;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      background: #fafafa;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
     h1 {
       text-align: center;
@@ -35,27 +33,40 @@
       display: block;
       margin-bottom: 5px;
     }
+    .input-group {
+      position: relative;
+      margin-bottom: 1rem;
+    }
     input {
       width: 100%;
       padding: 10px;
-      border: 1px solid #000;
+      border: 1px solid black;
       border-radius: 6px;
-      margin-bottom: 1rem;
       font-size: 14px;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      color: black;
     }
     button {
       width: 100%;
       padding: 12px;
-      background: #000;
-      color: #fff;
+      background: black;
+      color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-size: 16px;
-      transition: 0.3s;
     }
     button:hover {
-      opacity: 0.85;
+      opacity: 0.8;
     }
     .toggle {
       text-align: center;
@@ -64,7 +75,7 @@
     }
     .toggle button {
       background: none;
-      color: #000;
+      color: black;
       border: none;
       text-decoration: underline;
       cursor: pointer;
@@ -79,49 +90,44 @@
       margin-bottom: 10px;
       text-align: center;
     }
-    .success {
-      color: green;
-      font-size: 13px;
-      margin-bottom: 10px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 id="form-title">Fashionbing Login</h1>
     <p id="error-message" class="error"></p>
-    <p id="success-message" class="success"></p>
     <form id="auth-form">
       <div id="name-field" class="hidden">
         <label for="name">Full Name</label>
-        <input type="text" id="name" placeholder="Enter your full name">
-      </div>
-
-      <label for="email">Email</label>
-      <input type="email" id="email" placeholder="Enter your email" required>
-
-      <label for="password">Password</label>
-      <input type="password" id="password" placeholder="Enter your password" required>
-
-      <button type="submit" id="submit-btn">Login</button>
-    </form>
-
-    <div class="toggle">
-      <span id="toggle-text">Don’t have an account?</span>
-      <button id="toggle-btn">Sign Up</button>
-    </div>
+        <input type="text" id="name" placeholder="Enter your name">
+      </div><label for="email">Email</label>
+  <div class="input-group">
+    <input type="email" id="email" placeholder="Enter your email" required>
   </div>
 
-  <!-- Firebase SDKs -->
-  <script type="module">
+  <label for="password">Password</label>
+  <div class="input-group">
+    <input type="password" id="password" placeholder="Enter your password" required>
+    <button type="button" class="toggle-password" id="togglePassword">Show</button>
+  </div>
+
+  <button type="submit" id="submit-btn">Login</button>
+</form>
+
+<div class="toggle">
+  <span id="toggle-text">Don’t have an account?</span>
+  <button id="toggle-btn">Sign Up</button>
+</div>
+
+  </div>  <!-- Firebase SDKs -->  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { 
       getAuth, 
       createUserWithEmailAndPassword, 
       signInWithEmailAndPassword,
-      updateProfile,
-      sendEmailVerification
+      sendEmailVerification,
+      signOut,
+      reload
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
     const firebaseConfig = {
@@ -143,15 +149,13 @@
     const toggleBtn = document.getElementById("toggle-btn");
     const form = document.getElementById("auth-form");
     const errorMessage = document.getElementById("error-message");
-    const successMessage = document.getElementById("success-message");
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordField = document.getElementById("password");
 
     let isLogin = true;
 
-    // Toggle between Login & Sign Up
     toggleBtn.addEventListener("click", () => {
       isLogin = !isLogin;
-      errorMessage.textContent = "";
-      successMessage.textContent = "";
       if (isLogin) {
         formTitle.textContent = "Fashionbing Login";
         nameField.classList.add("hidden");
@@ -165,56 +169,50 @@
         toggleText.textContent = "Already have an account?";
         toggleBtn.textContent = "Login";
       }
+      errorMessage.textContent = "";
+      form.reset();
     });
 
-    // Password validation
-    function isStrongPassword(password) {
-      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
-      return regex.test(password);
-    }
+    togglePassword.addEventListener("click", () => {
+      const type = passwordField.type === "password" ? "text" : "password";
+      passwordField.type = type;
+      togglePassword.textContent = type === "password" ? "Show" : "Hide";
+    });
 
-    // Handle form submit
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       errorMessage.textContent = "";
-      successMessage.textContent = "";
 
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const fullName = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
       try {
-        if (!isLogin) {
-          if (!fullName) throw new Error("Full Name is required.");
-          if (!isStrongPassword(password)) {
-            throw new Error("Password must be at least 6 characters with uppercase, lowercase, number, and symbol.");
-          }
-        }
-
         if (isLogin) {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
-          if (!userCredential.user.emailVerified) {
-            throw new Error("Please verify your email before logging in.");
+          const userCred = await signInWithEmailAndPassword(auth, email, password);
+          await reload(userCred.user);
+          if (!userCred.user.emailVerified) {
+            errorMessage.textContent = "Please verify your email before logging in.";
+            await signOut(auth);
+            return;
           }
-          window.location.href = "https://pasystack.shop/fashionbingonline";
         } else {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(userCredential.user, { displayName: fullName });
-
-          // Send verification email
-          await sendEmailVerification(userCredential.user);
-          successMessage.textContent = "A verification link has been sent to your email. Please verify before logging in.";
+          const userCred = await createUserWithEmailAndPassword(auth, email, password);
+          await sendEmailVerification(userCred.user);
+          errorMessage.textContent = "Verification email sent. Please check your inbox.";
+          isLogin = true;
+          formTitle.textContent = "Fashionbing Login";
+          nameField.classList.add("hidden");
+          submitBtn.textContent = "Login";
+          toggleText.textContent = "Don’t have an account?";
+          toggleBtn.textContent = "Sign Up";
+          form.reset();
+          return;
         }
+
+        window.location.href = "https://pasystack.shop/fashionbingonline";
       } catch (err) {
-        let msg = err.message;
-        if (msg.includes("auth/email-already-in-use")) msg = "This email is already registered.";
-        if (msg.includes("auth/invalid-email")) msg = "Invalid email format.";
-        if (msg.includes("auth/user-not-found")) msg = "No account found with this email.";
-        if (msg.includes("auth/wrong-password")) msg = "Incorrect password.";
-        if (msg.includes("auth/weak-password")) msg = "Weak password. Please choose a stronger one.";
-        errorMessage.textContent = msg;
+        errorMessage.textContent = err.message;
       }
     });
-  </script>
-</body>
-    </html>
+  </script></body>
+  </html>
