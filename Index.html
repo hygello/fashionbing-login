@@ -8,8 +8,8 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: white;
-      color: black;
+      background: #fff;
+      color: #000;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -19,9 +19,10 @@
       width: 100%;
       max-width: 400px;
       padding: 2rem;
-      border: 2px solid black;
+      border: 2px solid #000;
       border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      background: #fafafa;
     }
     h1 {
       text-align: center;
@@ -37,7 +38,7 @@
     input {
       width: 100%;
       padding: 10px;
-      border: 1px solid black;
+      border: 1px solid #000;
       border-radius: 6px;
       margin-bottom: 1rem;
       font-size: 14px;
@@ -45,15 +46,16 @@
     button {
       width: 100%;
       padding: 12px;
-      background: black;
-      color: white;
+      background: #000;
+      color: #fff;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-size: 16px;
+      transition: 0.3s;
     }
     button:hover {
-      opacity: 0.8;
+      opacity: 0.85;
     }
     .toggle {
       text-align: center;
@@ -62,17 +64,11 @@
     }
     .toggle button {
       background: none;
-      color: black;
+      color: #000;
       border: none;
       text-decoration: underline;
       cursor: pointer;
       font-size: 14px;
-    }
-    .google-btn {
-      margin-top: 1rem;
-      background: white;
-      color: black;
-      border: 1px solid black;
     }
     .hidden {
       display: none;
@@ -83,16 +79,23 @@
       margin-bottom: 10px;
       text-align: center;
     }
+    .success {
+      color: green;
+      font-size: 13px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1 id="form-title">Fashionbing Login</h1>
     <p id="error-message" class="error"></p>
+    <p id="success-message" class="success"></p>
     <form id="auth-form">
       <div id="name-field" class="hidden">
         <label for="name">Full Name</label>
-        <input type="text" id="name" placeholder="Enter your name">
+        <input type="text" id="name" placeholder="Enter your full name">
       </div>
 
       <label for="email">Email</label>
@@ -104,8 +107,6 @@
       <button type="submit" id="submit-btn">Login</button>
     </form>
 
-    <button id="google-btn" class="google-btn">Continue with Google</button>
-
     <div class="toggle">
       <span id="toggle-text">Don’t have an account?</span>
       <button id="toggle-btn">Sign Up</button>
@@ -114,17 +115,15 @@
 
   <!-- Firebase SDKs -->
   <script type="module">
-    // Import Firebase modules from CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { 
       getAuth, 
       createUserWithEmailAndPassword, 
       signInWithEmailAndPassword,
-      GoogleAuthProvider,
-      signInWithPopup
+      updateProfile,
+      sendEmailVerification
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-    // ✅ Your Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAt6f0_yDSY_w7mBL55PWJkY4u__okpDUM",
       authDomain: "fashionbing-8cbeb.firebaseapp.com",
@@ -134,12 +133,9 @@
       appId: "1:204679263506:web:91e9f0ee2cf3407e442fcb"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
 
-    // DOM Elements
     const formTitle = document.getElementById("form-title");
     const nameField = document.getElementById("name-field");
     const submitBtn = document.getElementById("submit-btn");
@@ -147,13 +143,15 @@
     const toggleBtn = document.getElementById("toggle-btn");
     const form = document.getElementById("auth-form");
     const errorMessage = document.getElementById("error-message");
-    const googleBtn = document.getElementById("google-btn");
+    const successMessage = document.getElementById("success-message");
 
     let isLogin = true;
 
     // Toggle between Login & Sign Up
     toggleBtn.addEventListener("click", () => {
       isLogin = !isLogin;
+      errorMessage.textContent = "";
+      successMessage.textContent = "";
       if (isLogin) {
         formTitle.textContent = "Fashionbing Login";
         nameField.classList.add("hidden");
@@ -169,37 +167,54 @@
       }
     });
 
-    // Handle Email/Password form submit
+    // Password validation
+    function isStrongPassword(password) {
+      const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+      return regex.test(password);
+    }
+
+    // Handle form submit
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      errorMessage.textContent = ""; // Clear old error
+      errorMessage.textContent = "";
+      successMessage.textContent = "";
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const fullName = document.getElementById("name").value.trim();
 
       try {
-        if (isLogin) {
-          await signInWithEmailAndPassword(auth, email, password);
-        } else {
-          await createUserWithEmailAndPassword(auth, email, password);
+        if (!isLogin) {
+          if (!fullName) throw new Error("Full Name is required.");
+          if (!isStrongPassword(password)) {
+            throw new Error("Password must be at least 6 characters with uppercase, lowercase, number, and symbol.");
+          }
         }
 
-        // Redirect on success
-        window.location.href = "https://fashionbing.callbell.shop";
-      } catch (err) {
-        errorMessage.textContent = err.message;
-      }
-    });
+        if (isLogin) {
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          if (!userCredential.user.emailVerified) {
+            throw new Error("Please verify your email before logging in.");
+          }
+          window.location.href = "https://pasystack.shop/fashionbingonline";
+        } else {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(userCredential.user, { displayName: fullName });
 
-    // Handle Google Sign-In
-    googleBtn.addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-        window.location.href = "https://fashionbing.callbell.shop";
+          // Send verification email
+          await sendEmailVerification(userCredential.user);
+          successMessage.textContent = "A verification link has been sent to your email. Please verify before logging in.";
+        }
       } catch (err) {
-        errorMessage.textContent = err.message;
+        let msg = err.message;
+        if (msg.includes("auth/email-already-in-use")) msg = "This email is already registered.";
+        if (msg.includes("auth/invalid-email")) msg = "Invalid email format.";
+        if (msg.includes("auth/user-not-found")) msg = "No account found with this email.";
+        if (msg.includes("auth/wrong-password")) msg = "Incorrect password.";
+        if (msg.includes("auth/weak-password")) msg = "Weak password. Please choose a stronger one.";
+        errorMessage.textContent = msg;
       }
     });
   </script>
 </body>
-  </html>
+    </html>
